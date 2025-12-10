@@ -14,6 +14,8 @@
             --text-muted: #b3b3b3;
             --accent: #e50914; /* Netflix Red */
             --accent-hover: #b20710;
+            --btn-blue: #007bff;
+            --btn-blue-hover: #0056b3;
             --border: #333;
             --success: #46d369;
             --input-bg: #333;
@@ -30,9 +32,7 @@
             flex-direction: column;
         }
 
-        button {
-            cursor: pointer;
-        }
+        button { cursor: pointer; }
 
         /* --- LOGIN PANEL STYLES --- */
         #loginSection {
@@ -58,10 +58,7 @@
             text-align: center;
         }
 
-        .login-box h2 {
-            margin-bottom: 25px;
-            color: var(--accent);
-        }
+        .login-box h2 { margin-bottom: 25px; color: var(--accent); }
 
         .login-input {
             width: 100%;
@@ -85,7 +82,6 @@
             font-size: 16px;
             transition: 0.2s;
         }
-
         .login-btn:hover { background: var(--accent-hover); }
 
         .error-msg {
@@ -98,12 +94,8 @@
             border-radius: 4px;
         }
 
-        /* --- DASHBOARD STYLES (Adapted from your original) --- */
-        #dashboardSection {
-            display: none; /* Hidden by default */
-            width: 100%;
-            min-height: 100vh;
-        }
+        /* --- DASHBOARD STYLES --- */
+        #dashboardSection { display: none; width: 100%; min-height: 100vh; }
 
         .admin-header {
             display: flex;
@@ -157,6 +149,44 @@
         }
         .action-btn:hover { background: var(--accent-hover); }
 
+        /* --- QUICK ADD BUTTONS STYLING --- */
+        .quick-add-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-btn {
+            background-color: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: 0.2s;
+        }
+
+        .time-btn:hover {
+            background-color: var(--btn-blue);
+            border-color: var(--btn-blue);
+        }
+
+        .clear-date-btn {
+            grid-column: span 4;
+            background-color: rgba(229, 9, 20, 0.1);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            margin-top: 5px;
+        }
+        .clear-date-btn:hover { background-color: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Mobile adjustment for buttons */
+        @media (max-width: 500px) {
+            .quick-add-grid { grid-template-columns: repeat(2, 1fr); }
+            .clear-date-btn { grid-column: span 2; }
+        }
+
         .message {
             padding: 10px;
             border-radius: 4px;
@@ -180,9 +210,6 @@
         }
         .loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Hide the sidebar menu for this specific single-page tool */
-        nav#mainMenu { display: none; } 
     </style>
 </head>
 <body>
@@ -255,9 +282,23 @@
                     </select>
                 </div>
                 
+                <!-- NEW QUICK ADD DATE SECTION -->
                 <div class="form-group">
                     <label>Subscription Expiration</label>
                     <input type="datetime-local" id="user-edit-expiresAt" />
+                    
+                    <div class="quick-add-grid">
+                        <button type="button" class="time-btn" onclick="addTime(1, 'd')">+ 1 Day</button>
+                        <button type="button" class="time-btn" onclick="addTime(3, 'd')">+ 3 Days</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'w')">+ 1 Week</button>
+                        <button type="button" class="time-btn" onclick="addTime(2, 'w')">+ 2 Weeks</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'm')">+ 1 Month</button>
+                        <button type="button" class="time-btn" onclick="addTime(3, 'm')">+ 3 Months</button>
+                        <button type="button" class="time-btn" onclick="addTime(6, 'm')">+ 6 Months</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'y')">+ 1 Year</button>
+                        
+                        <button type="button" class="time-btn clear-date-btn" onclick="clearDate()">Clear Date (Remove Subscription)</button>
+                    </div>
                 </div>
                 
                 <div id="user-status-info" style="display:none; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 5px;"></div>
@@ -277,6 +318,46 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js"></script>
     
     <script>
+        // --- HELPER FUNCTION: QUICK ADD TIME ---
+        function addTime(amount, unit) {
+            const dateInput = document.getElementById('user-edit-expiresAt');
+            let baseDate = new Date(); // Default to NOW
+
+            // If there is already a value in the input
+            if (dateInput.value) {
+                const currentInputDate = new Date(dateInput.value);
+                const now = new Date();
+                
+                // If current input is in the future, add to IT.
+                // If current input is in the past, restart from NOW.
+                if (currentInputDate > now) {
+                    baseDate = currentInputDate;
+                }
+            }
+
+            // Perform Calculation
+            if (unit === 'd') {
+                baseDate.setDate(baseDate.getDate() + amount);
+            } else if (unit === 'w') {
+                baseDate.setDate(baseDate.getDate() + (amount * 7));
+            } else if (unit === 'm') {
+                baseDate.setMonth(baseDate.getMonth() + amount);
+            } else if (unit === 'y') {
+                baseDate.setFullYear(baseDate.getFullYear() + amount);
+            }
+
+            // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+            // We need to account for local timezone offset manually to format correctly
+            const offset = baseDate.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(baseDate.getTime() - offset).toISOString().slice(0, 16);
+            
+            dateInput.value = localISOTime;
+        }
+
+        function clearDate() {
+            document.getElementById('user-edit-expiresAt').value = '';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             // --- 1. FIREBASE CONFIG ---
             const firebaseConfig = {
@@ -293,7 +374,6 @@
             let db, auth;
             try {
                 const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
-                // Optional: App Check initialization
                 try {
                     const appCheck = firebase.appCheck(app);
                     appCheck.activate('6LfE6yYsAAAAAGaRjxCskaG2HiGs4wtj_MODir-h', true);
@@ -341,16 +421,10 @@
             // --- 4. AUTH STATE LOGIC ---
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    // Check if admin (optional check, uncomment if you have isAdmin field)
-                    // const userDoc = await db.collection('users').doc(user.uid).get();
-                    // if (!userDoc.exists || !userDoc.data().isAdmin) { ... handle non-admin ... }
-
-                    // Logged In: Show Dashboard
                     loginSection.style.display = 'none';
                     dashboardSection.style.display = 'block';
                     adminEmailDisplay.textContent = user.email;
                 } else {
-                    // Logged Out: Show Login
                     loginSection.style.display = 'flex';
                     dashboardSection.style.display = 'none';
                 }
@@ -371,7 +445,6 @@
                 setLoading(loginBtn, true);
                 try {
                     await auth.signInWithEmailAndPassword(email, pass);
-                    // onAuthStateChanged will handle the UI switch
                 } catch (err) {
                     loginError.textContent = "Login failed: " + err.message;
                     loginError.style.display = 'block';
@@ -380,7 +453,6 @@
                 }
             });
 
-            // Enter key support for login
             passInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') loginBtn.click();
             });
@@ -458,7 +530,6 @@
                 setLoading(userSearchBtn, true);
 
                 try {
-                    // Parallel search by email, name, phone
                     const usersRef = db.collection("users");
                     const [byEmail, byName, byPhone] = await Promise.all([
                         usersRef.where("email", "==", term).get(),
@@ -472,20 +543,19 @@
                     });
 
                     if (results.size === 0) {
-                        // NO USER FOUND -> Setup Creation Mode
+                        // Create Mode
                         displayMessage('No user found. You can create a new one.', 'info');
                         userFormTitle.textContent = "Create New User";
                         userDocIdInput.value = "Auto-Generated";
                         
-                        // Pre-fill inputs based on what looked like an email
                         if(term.includes('@')) userEditEmailInput.value = term;
                         else userEditNameInput.value = term;
 
                         userUpdateBtn.style.display = 'none';
                         userCreateBtn.style.display = 'block';
                     } else {
-                        // USER FOUND -> Setup Edit Mode
-                        const user = results.values().next().value; // Get first match
+                        // Edit Mode
+                        const user = results.values().next().value;
                         displayMessage('User found.', 'success');
                         
                         userFormTitle.textContent = "Edit User";
@@ -533,7 +603,6 @@
                     await db.collection("users").doc(uid).update(payload);
                     displayMessage('User updated successfully', 'success');
                     
-                    // Update the status display immediately
                     displayUserStatus({ 
                         ...payload, 
                         expiresAt: dateVal ? firebase.firestore.Timestamp.fromDate(dateVal) : null 
@@ -552,7 +621,7 @@
                 try {
                     const dateVal = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value) : null;
                     
-                    const newDoc = db.collection("users").doc(); // Generate ID
+                    const newDoc = db.collection("users").doc();
                     
                     const payload = {
                         name: userEditNameInput.value,
@@ -565,7 +634,6 @@
 
                     await newDoc.set(payload);
                     
-                    // Switch to Edit mode
                     userDocIdInput.value = newDoc.id;
                     userFormTitle.textContent = "Edit User";
                     userCreateBtn.style.display = 'none';
