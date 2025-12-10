@@ -3,64 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - Admin</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <title>StreamZone User Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- GLOBAL STYLES --- */
+        :root {
+            --bg-color: #141414;
+            --panel-bg: #1f1f1f;
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --accent: #e50914; /* Netflix Red */
+            --accent-hover: #b20710;
+            --border: #333;
+            --success: #46d369;
+            --input-bg: #333;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* --- LOGIN PANEL STYLES --- */
+        #loginSection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--bg-color);
+            z-index: 1000;
+        }
+
+        .login-box {
+            background-color: var(--panel-bg);
+            padding: 40px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-bottom: 25px;
+            color: var(--accent);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .login-btn:hover { background: var(--accent-hover); }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 0.9rem;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        /* --- DASHBOARD STYLES (Adapted from your original) --- */
+        #dashboardSection {
+            display: none; /* Hidden by default */
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-header h1 { margin: 0; font-size: 1.5rem; }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: 0.3s;
+        }
+        .logout-btn:hover { background: var(--accent); color: white; }
+
+        .page-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--text-muted); }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .action-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .action-btn:hover { background: var(--accent-hover); }
+
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .message.success { background: rgba(70, 211, 105, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .message.error { background: rgba(229, 9, 20, 0.2); color: #ff6b6b; border: 1px solid var(--accent); }
+        .message.info { background: rgba(0, 123, 255, 0.2); color: #4dabf7; border: 1px solid #007bff; }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            display: none;
+        }
+        .loading .spinner { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Hide the sidebar menu for this specific single-page tool */
+        nav#mainMenu { display: none; } 
+    </style>
 </head>
 <body>
-    <!-- Main Admin Panel (Hidden by default until auth checks out) -->
-    <div id="adminPanel" style="display: none; width: 100%;">
-        <button id="menuToggleBtn"><i class="fas fa-bars"></i></button>
 
-        <nav id="mainMenu">
-            <div class="menu-header">Admin Menu</div>
-            <a class="menu-link" href="add_from_tmdb.html"><i class="fas fa-magic"></i> Add from TMDB</a>
-            <a class="menu-link" href="manual_add.html"><i class="fas fa-edit"></i> Manual Add</a>
-            <a class="menu-link" href="manage_content.html"><i class="fas fa-search"></i> Search & Edit/Delete</a>
-            <a class="menu-link" href="all_content.html"><i class="fas fa-film"></i> All Content</a>
-             <a class="menu-link" href="new  notification.html"><i class="fas fa-edit"></i>Push Notification</a>
-            <a class="menu-link" href="add_tv_channel.html"><i class="fas fa-tv"></i> Add Live TV Channel</a>
-            <a class="menu-link" href="banners.html"><i class="fas fa-images"></i> Manage Banners</a>
-            <a class="menu-link" href="notifications.html"><i class="fas fa-paper-plane"></i> Send Notifications</a>
-            <a class="menu-link active" href="user_management.html"><i class="fas fa-users-cog"></i> User Management</a>
-            <a href="https://storage1.streamzonemovies.online" target="_blank"><i class="fas fa-server"></i> My Server</a>
-        </nav>
-
-        <div class="main-content" id="mainContentArea">
-            <div class="admin-header">
-                <h1 id="pageTitle">User Management Panel</h1>
-                <span id="adminEmailDisplay"></span>
-                <button class="logout-btn" id="logoutBtn">Logout <i class="fas fa-sign-out-alt"></i></button>
-            </div>
+    <!-- === SECTION 1: LOGIN === -->
+    <div id="loginSection">
+        <div class="login-box">
+            <h2><i class="fas fa-users-cog"></i> User Manager</h2>
+            <div id="login-error" class="error-msg"></div>
             
-            <div class="page-container" style="display: block;">
-                <div class="form-group">
-                    <label for="user-search-input">Search User by Email, Name, or Phone</label>
-                    <input type="text" id="user-search-input" placeholder="e.g., user@example.com, Rafael, or 649386864" />
+            <input type="email" id="login-email" class="login-input" placeholder="Admin Email" required>
+            <input type="password" id="login-password" class="login-input" placeholder="Password" required>
+            
+            <button id="login-btn" class="login-btn">Login <span class="spinner"></span></button>
+        </div>
+    </div>
+
+    <!-- === SECTION 2: DASHBOARD === -->
+    <div id="dashboardSection">
+        <div class="admin-header">
+            <div>
+                <h1 id="pageTitle">User Management</h1>
+                <small id="adminEmailDisplay" style="color: var(--text-muted);"></small>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Logout <i class="fas fa-sign-out-alt"></i></button>
+        </div>
+        
+        <div class="page-container">
+            <!-- Search Area -->
+            <div class="form-group">
+                <label for="user-search-input">Search User (Email, Name, or Phone)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="user-search-input" placeholder="e.g. user@example.com" />
+                    <button id="user-search-btn" class="action-btn">Search<span class="spinner"></span></button>
                 </div>
-                <button id="user-search-btn">Search User<span class="spinner"></span></button>
+            </div>
 
-                <div id="user-message-area" class="message" style="display:none;"></div>
-                <hr id="user-form-divider" style="display:none;" />
+            <div id="user-message-area" class="message"></div>
+            <hr id="user-form-divider" style="border-color: var(--border); margin: 25px 0; display:none;" />
 
-                <div id="user-edit-form-section" style="display:none;">
-                    <h3 id="user-form-title">Edit User</h3>
-                    <div class="form-group"><label for="user-doc-id">Document ID (User UID)</label><input type="text" id="user-doc-id" readonly /></div>
-                    <div class="form-group"><label for="user-edit-name">Full Name</label><input type="text" id="user-edit-name" /></div>
-                    <div class="form-group"><label for="user-edit-email">Email</label><input type="email" id="user-edit-email" /></div>
-                    <div class="form-group"><label for="user-edit-phone">Phone Number</label><input type="text" id="user-edit-phone" /></div>
-                    <div class="form-group"><label for="user-edit-activated">Account Activated</label><select id="user-edit-activated"><option value="true">True</option><option value="false">False</option></select></div>
-                    <div class="form-group"><label for="user-edit-expiresAt">Subscription Expiration</label><input type="datetime-local" id="user-edit-expiresAt" /></div>
-                    
-                    <div id="user-status-info" style="display:none; margin-top: 20px; margin-bottom: 20px; padding: 15px; background-color: var(--primary-bg); border-radius: 8px; border: 1px solid #444;"></div>
+            <!-- Edit Form -->
+            <div id="user-edit-form-section" style="display:none;">
+                <h3 id="user-form-title" style="color: var(--accent);">Edit User</h3>
+                
+                <div class="form-group">
+                    <label>Document ID (User UID)</label>
+                    <input type="text" id="user-doc-id" readonly style="background: #2a2a2a; color: #888; cursor: not-allowed;" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="user-edit-name" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="user-edit-email" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="user-edit-phone" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Account Activated</label>
+                    <select id="user-edit-activated">
+                        <option value="true">True (Active)</option>
+                        <option value="false">False (Inactive)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Subscription Expiration</label>
+                    <input type="datetime-local" id="user-edit-expiresAt" />
+                </div>
+                
+                <div id="user-status-info" style="display:none; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 5px;"></div>
 
-                    <button id="user-update-btn">Update Document<span class="spinner"></span></button>
-                    <button id="user-create-btn" style="display:none;">Create New Document<span class="spinner"></span></button>
+                <div style="margin-top: 25px;">
+                    <button id="user-update-btn" class="action-btn" style="width: 100%;">Update User<span class="spinner"></span></button>
+                    <button id="user-create-btn" class="action-btn" style="width: 100%; display:none; background-color: var(--success);">Create New User<span class="spinner"></span></button>
                 </div>
             </div>
         </div>
     </div>
     
+    <!-- FIREBASE LIBRARIES -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -68,7 +278,7 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. FIREBASE INITIALIZATION ---
+            // --- 1. FIREBASE CONFIG ---
             const firebaseConfig = {
                 apiKey: "AIzaSyA_tMJGvqeS77OE6FnDFkLUmAZowzY2rVw",
                 authDomain: "streamzonemovies256.firebaseapp.com",
@@ -79,92 +289,44 @@
                 measurementId: "G-V2NNGRKCGZ"
             };
 
+            // --- 2. INITIALIZE FIREBASE ---
             let db, auth;
             try {
                 const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
-                const appCheck = firebase.appCheck(app);
-                appCheck.activate(
-                    '6LfE6yYsAAAAAGaRjxCskaG2HiGs4wtj_MODir-h',
-                    true
-                );
+                // Optional: App Check initialization
+                try {
+                    const appCheck = firebase.appCheck(app);
+                    appCheck.activate('6LfE6yYsAAAAAGaRjxCskaG2HiGs4wtj_MODir-h', true);
+                } catch(e) { console.log("App check skipped"); }
+                
                 db = firebase.firestore(app);
                 auth = firebase.auth(app);
             } catch (error) {
-                console.error("Critical error initializing Firebase:", error);
+                document.body.innerHTML = "<h1 style='color:white;text-align:center'>Firebase Init Error</h1>";
+                console.error(error);
                 return;
             }
 
-            // --- 2. CORE AUTH & REDIRECT LOGIC ---
-            const adminPanel = document.getElementById('adminPanel');
+            // --- 3. DOM ELEMENTS ---
+            const loginSection = document.getElementById('loginSection');
+            const dashboardSection = document.getElementById('dashboardSection');
             const adminEmailDisplay = document.getElementById('adminEmailDisplay');
             
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    try {
-                        // Optional: Verify if the user is actually an admin in the database
-                        const userDoc = await db.collection('users').doc(user.uid).get();
-                        // Assuming you have an 'isAdmin' field. If not, remove the '&& userDoc.data().isAdmin' part
-                        if (userDoc.exists && userDoc.data().isAdmin === true) {
-                            adminPanel.style.display = 'flex';
-                            adminEmailDisplay.textContent = `Logged in as: ${user.email}`;
-                        } else {
-                            // Valid user but not admin
-                            alert("Access Denied: Admin privileges required.");
-                            await auth.signOut();
-                            window.location.href = 'login.html';
-                        }
-                    } catch (error) {
-                        console.error("Error verifying admin status:", error);
-                        // Fallback: If DB check fails, just show panel or logout. 
-                        // For safety, let's keep them logged in but warn, or default to showing panel if you don't use isAdmin flag strictly yet.
-                        adminPanel.style.display = 'flex'; 
-                        adminEmailDisplay.textContent = `Logged in as: ${user.email}`;
-                    }
-                } else {
-                    // NOT LOGGED IN -> Redirect to independent Login page
-                    window.location.href = 'login.html';
-                }
-            });
+            // Login Elements
+            const loginBtn = document.getElementById('login-btn');
+            const emailInput = document.getElementById('login-email');
+            const passInput = document.getElementById('login-password');
+            const loginError = document.getElementById('login-error');
 
+            // Dashboard Elements
             const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => { 
-                    auth.signOut().then(() => {
-                        window.location.href = 'login.html';
-                    }); 
-                });
-            }
-
-            // --- UI LOGIC ---
-            const menuToggleBtn = document.getElementById('menuToggleBtn');
-            const mainMenu = document.getElementById('mainMenu');
-            if (menuToggleBtn && mainMenu) {
-                menuToggleBtn.addEventListener('click', () => { mainMenu.classList.toggle('open'); });
-            }
-
-            // --- 3. HELPER FUNCTIONS ---
-            function setLoading(button, isLoading) {
-                if (button) {
-                    button.classList.toggle('loading', isLoading);
-                    button.disabled = isLoading;
-                }
-            }
-
-            function displayMessage(element, msg, type) {
-                if (element) {
-                    element.textContent = msg;
-                    element.className = `message ${type}`;
-                    element.style.display = 'block';
-                    setTimeout(() => { element.style.display = 'none'; }, 8000);
-                }
-            }
-            
-            // --- 4. USER MANAGEMENT LOGIC ---
             const userSearchInput = document.getElementById('user-search-input'); 
             const userSearchBtn = document.getElementById('user-search-btn');
             const userMessageArea = document.getElementById('user-message-area');
             const userEditFormSection = document.getElementById('user-edit-form-section');
             const userFormDivider = document.getElementById('user-form-divider');
+            
+            // Form Inputs
             const userDocIdInput = document.getElementById('user-doc-id');
             const userEditNameInput = document.getElementById('user-edit-name');
             const userEditEmailInput = document.getElementById('user-edit-email');
@@ -176,40 +338,83 @@
             const userFormTitle = document.getElementById('user-form-title');
             const userStatusInfo = document.getElementById('user-status-info');
 
+            // --- 4. AUTH STATE LOGIC ---
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // Check if admin (optional check, uncomment if you have isAdmin field)
+                    // const userDoc = await db.collection('users').doc(user.uid).get();
+                    // if (!userDoc.exists || !userDoc.data().isAdmin) { ... handle non-admin ... }
+
+                    // Logged In: Show Dashboard
+                    loginSection.style.display = 'none';
+                    dashboardSection.style.display = 'block';
+                    adminEmailDisplay.textContent = user.email;
+                } else {
+                    // Logged Out: Show Login
+                    loginSection.style.display = 'flex';
+                    dashboardSection.style.display = 'none';
+                }
+            });
+
+            // --- 5. LOGIN ACTIONS ---
+            loginBtn.addEventListener('click', async () => {
+                const email = emailInput.value;
+                const pass = passInput.value;
+                loginError.style.display = 'none';
+
+                if (!email || !pass) {
+                    loginError.textContent = "Please enter email and password";
+                    loginError.style.display = 'block';
+                    return;
+                }
+
+                setLoading(loginBtn, true);
+                try {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                    // onAuthStateChanged will handle the UI switch
+                } catch (err) {
+                    loginError.textContent = "Login failed: " + err.message;
+                    loginError.style.display = 'block';
+                } finally {
+                    setLoading(loginBtn, false);
+                }
+            });
+
+            // Enter key support for login
+            passInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginBtn.click();
+            });
+
+            // --- 6. LOGOUT ACTION ---
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut();
+            });
+
+            // --- 7. DASHBOARD FUNCTIONS ---
+            
+            function setLoading(btn, isLoading) {
+                if (isLoading) {
+                    btn.classList.add('loading');
+                    btn.disabled = true;
+                } else {
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
+
+            function displayMessage(msg, type) {
+                userMessageArea.textContent = msg;
+                userMessageArea.className = `message ${type}`;
+                userMessageArea.style.display = 'block';
+                setTimeout(() => { userMessageArea.style.display = 'none'; }, 5000);
+            }
+
             function formatTimestampForInput(timestamp) {
                 if (!timestamp || typeof timestamp.toDate !== 'function') return '';
                 const date = timestamp.toDate();
                 const timezoneOffset = date.getTimezoneOffset() * 60000;
                 const localDate = new Date(date.getTime() - timezoneOffset);
                 return localDate.toISOString().slice(0, 16);
-            }
-            
-            function displayUserStatus(userData) {
-                if (!userStatusInfo) return;
-                let statusHTML = '<h4 style="margin-top:0; margin-bottom: 10px;">Subscription Status</h4>';
-                const expiresAt = userData.expiresAt;
-                if (expiresAt && typeof expiresAt.toDate === 'function') {
-                    const expiryDate = expiresAt.toDate();
-                    const now = new Date();
-                    const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-                    const formattedDate = expiryDate.toLocaleString('en-US', options);
-                    if (expiryDate < now) {
-                        statusHTML += `<p style="color: var(--danger-color); margin:0;">Status: Expired on ${formattedDate}</p>`;
-                    } else {
-                        statusHTML += `<p style="color: var(--success-color); margin:0;">Status: Active, expires on ${formattedDate}</p>`;
-                    }
-                } else {
-                    statusHTML += '<p style="margin:0;">Status: No subscription expiration information.</p>';
-                }
-                const modifiedTimestamp = userData.updatedAt || userData.createdAt;
-                if (modifiedTimestamp && typeof modifiedTimestamp.toDate === 'function') {
-                     const modifiedDate = modifiedTimestamp.toDate();
-                     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-                     const formattedModifiedDate = modifiedDate.toLocaleString('en-US', options);
-                     statusHTML += `<p style="font-size: 0.8em; color: #999; margin-top: 10px; margin-bottom: 0;">Last Modified: ${formattedModifiedDate}</p>`
-                }
-                userStatusInfo.innerHTML = statusHTML;
-                userStatusInfo.style.display = 'block';
             }
 
             function clearUserForm() {
@@ -221,121 +426,156 @@
                 userEditExpiresAtInput.value = '';
                 userEditFormSection.style.display = 'none';
                 userFormDivider.style.display = 'none';
-                if (userStatusInfo) userStatusInfo.style.display = 'none';
+                userStatusInfo.style.display = 'none';
             }
 
-            userSearchBtn.addEventListener('click', async () => {
-                const searchTerm = userSearchInput.value.trim();
-                if (!searchTerm) {
-                    displayMessage(userMessageArea, 'Please enter an email, name, or phone number to search.', 'error');
-                    return;
+            function displayUserStatus(userData) {
+                let html = '<h4 style="margin:0 0 10px 0; color:white;">Subscription Status</h4>';
+                
+                if (userData.expiresAt && typeof userData.expiresAt.toDate === 'function') {
+                    const expiry = userData.expiresAt.toDate();
+                    const now = new Date();
+                    const dateStr = expiry.toLocaleString();
+                    
+                    if (expiry < now) {
+                        html += `<div style="color:#ff6b6b">Expired on: ${dateStr}</div>`;
+                    } else {
+                        html += `<div style="color:#46d369">Active until: ${dateStr}</div>`;
+                    }
+                } else {
+                    html += `<div style="color:#aaa">No Expiration Date Set</div>`;
                 }
+                userStatusInfo.innerHTML = html;
+                userStatusInfo.style.display = 'block';
+            }
+
+            // SEARCH LOGIC
+            userSearchBtn.addEventListener('click', async () => {
+                const term = userSearchInput.value.trim();
+                if (!term) return displayMessage('Enter search term', 'error');
+                
                 clearUserForm();
                 setLoading(userSearchBtn, true);
+
                 try {
-                    const emailQuery = db.collection("users").where("email", "==", searchTerm).get();
-                    const nameQuery = db.collection("users").where("name", "==", searchTerm).get();
-                    const phoneQuery = db.collection("users").where("phone", "==", searchTerm).get();
-                    const [emailResults, nameResults, phoneResults] = await Promise.all([emailQuery, nameQuery, phoneQuery]);
+                    // Parallel search by email, name, phone
+                    const usersRef = db.collection("users");
+                    const [byEmail, byName, byPhone] = await Promise.all([
+                        usersRef.where("email", "==", term).get(),
+                        usersRef.where("name", "==", term).get(),
+                        usersRef.where("phone", "==", term).get()
+                    ]);
+
                     const results = new Map();
-                    emailResults.forEach(doc => results.set(doc.id, { id: doc.id, ...doc.data() }));
-                    nameResults.forEach(doc => results.set(doc.id, { id: doc.id, ...doc.data() }));
-                    phoneResults.forEach(doc => results.set(doc.id, { id: doc.id, ...doc.data() }));
+                    [byEmail, byName, byPhone].forEach(snap => {
+                        snap.forEach(doc => results.set(doc.id, { id: doc.id, ...doc.data() }));
+                    });
 
                     if (results.size === 0) {
-                        displayMessage(userMessageArea, 'No user found. You can create a new document.', 'info');
-                        userEditEmailInput.value = searchTerm.includes('@') ? searchTerm : '';
-                        userEditNameInput.value = !searchTerm.includes('@') ? searchTerm : '';
-                        userFormTitle.textContent = "Create New User Document";
-                        userDocIdInput.value = "Will be auto-generated";
+                        // NO USER FOUND -> Setup Creation Mode
+                        displayMessage('No user found. You can create a new one.', 'info');
+                        userFormTitle.textContent = "Create New User";
+                        userDocIdInput.value = "Auto-Generated";
+                        
+                        // Pre-fill inputs based on what looked like an email
+                        if(term.includes('@')) userEditEmailInput.value = term;
+                        else userEditNameInput.value = term;
+
                         userUpdateBtn.style.display = 'none';
                         userCreateBtn.style.display = 'block';
                     } else {
-                        if (results.size > 1) {
-                            displayMessage(userMessageArea, `Found ${results.size} users. Displaying the first one. Please use a more specific search term.`, 'warn');
-                        } else {
-                            displayMessage(userMessageArea, 'User found and form populated.', 'success');
-                        }
-                        const [firstId, firstData] = results.entries().next().value;
-                        userDocIdInput.value = firstId;
-                        userEditNameInput.value = firstData.name || '';
-                        userEditEmailInput.value = firstData.email || '';
-                        userEditPhoneInput.value = firstData.phone || '';
-                        userEditActivatedSelect.value = firstData.activated ? 'true' : 'false';
-                        userEditExpiresAtInput.value = formatTimestampForInput(firstData.expiresAt);
-                        userFormTitle.textContent = "Edit User Document";
-                        userCreateBtn.style.display = 'none';
+                        // USER FOUND -> Setup Edit Mode
+                        const user = results.values().next().value; // Get first match
+                        displayMessage('User found.', 'success');
+                        
+                        userFormTitle.textContent = "Edit User";
+                        userDocIdInput.value = user.id;
+                        userEditNameInput.value = user.name || '';
+                        userEditEmailInput.value = user.email || '';
+                        userEditPhoneInput.value = user.phone || '';
+                        userEditActivatedSelect.value = user.activated ? 'true' : 'false';
+                        userEditExpiresAtInput.value = formatTimestampForInput(user.expiresAt);
+
+                        displayUserStatus(user);
+
                         userUpdateBtn.style.display = 'block';
-                        displayUserStatus(firstData);
+                        userCreateBtn.style.display = 'none';
                     }
+                    
                     userEditFormSection.style.display = 'block';
                     userFormDivider.style.display = 'block';
-                } catch (error) {
-                    displayMessage(userMessageArea, `Error searching: ${error.message}`, 'error');
+
+                } catch (e) {
+                    displayMessage(e.message, 'error');
                 } finally {
                     setLoading(userSearchBtn, false);
                 }
             });
 
+            // UPDATE LOGIC
             userUpdateBtn.addEventListener('click', async () => {
-                const userId = userDocIdInput.value;
-                if (!userId) { return; }
+                const uid = userDocIdInput.value;
+                if (!uid) return;
+
                 setLoading(userUpdateBtn, true);
                 try {
-                    const dateValue = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value) : null;
+                    const dateVal = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value) : null;
+                    
                     const payload = {
                         name: userEditNameInput.value,
                         email: userEditEmailInput.value,
                         phone: userEditPhoneInput.value,
                         activated: userEditActivatedSelect.value === 'true',
-                        expiresAt: dateValue ? firebase.firestore.Timestamp.fromDate(dateValue) : firebase.firestore.FieldValue.delete(),
+                        expiresAt: dateVal ? firebase.firestore.Timestamp.fromDate(dateVal) : firebase.firestore.FieldValue.delete(),
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    await db.collection("users").doc(userId).update(payload);
-                    displayMessage(userMessageArea, 'User document updated successfully!', 'success');
-                    const updatedDataForDisplay = { 
+
+                    await db.collection("users").doc(uid).update(payload);
+                    displayMessage('User updated successfully', 'success');
+                    
+                    // Update the status display immediately
+                    displayUserStatus({ 
                         ...payload, 
-                        expiresAt: dateValue ? firebase.firestore.Timestamp.fromDate(dateValue) : null,
-                        updatedAt: firebase.firestore.Timestamp.now()
-                    };
-                    displayUserStatus(updatedDataForDisplay);
-                } catch (error) {
-                    displayMessage(userMessageArea, `Update failed: ${error.message}`, 'error');
+                        expiresAt: dateVal ? firebase.firestore.Timestamp.fromDate(dateVal) : null 
+                    });
+
+                } catch (e) {
+                    displayMessage(e.message, 'error');
                 } finally {
                     setLoading(userUpdateBtn, false);
                 }
             });
 
+            // CREATE LOGIC
             userCreateBtn.addEventListener('click', async () => {
-                const email = userEditEmailInput.value.trim();
-                const name = userEditNameInput.value.trim();
-                if (!email || !name) {
-                    displayMessage(userMessageArea, 'Email and Name are required for a new user.', 'error');
-                    return;
-                }
                 setLoading(userCreateBtn, true);
                 try {
-                    const dateValue = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value) : null;
-                    const newDocRef = db.collection("users").doc();
-                    await newDocRef.set({
-                        name: name,
-                        email: email,
-                        phone: userEditPhoneInput.value.trim(),
+                    const dateVal = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value) : null;
+                    
+                    const newDoc = db.collection("users").doc(); // Generate ID
+                    
+                    const payload = {
+                        name: userEditNameInput.value,
+                        email: userEditEmailInput.value,
+                        phone: userEditPhoneInput.value,
                         activated: userEditActivatedSelect.value === 'true',
-                        expiresAt: dateValue ? firebase.firestore.Timestamp.fromDate(dateValue) : null,
+                        expiresAt: dateVal ? firebase.firestore.Timestamp.fromDate(dateVal) : null,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    userDocIdInput.value = newDocRef.id;
-                    displayMessage(userMessageArea, `New user document created successfully: ${newDocRef.id}`, 'success');
+                    };
+
+                    await newDoc.set(payload);
+                    
+                    // Switch to Edit mode
+                    userDocIdInput.value = newDoc.id;
+                    userFormTitle.textContent = "Edit User";
                     userCreateBtn.style.display = 'none';
                     userUpdateBtn.style.display = 'block';
-                    userFormTitle.textContent = "Edit User Document";
-                    displayUserStatus({ 
-                        expiresAt: dateValue ? firebase.firestore.Timestamp.fromDate(dateValue) : null,
-                        createdAt: firebase.firestore.Timestamp.now()
-                    });
-                } catch (error) {
-                    displayMessage(userMessageArea, `Creation failed: ${error.message}`, 'error');
+                    
+                    displayMessage('New user created!', 'success');
+                    displayUserStatus(payload);
+
+                } catch (e) {
+                    displayMessage(e.message, 'error');
                 } finally {
                     setLoading(userCreateBtn, false);
                 }
