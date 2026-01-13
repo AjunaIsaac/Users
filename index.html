@@ -108,70 +108,188 @@
         </div>
     </div>
 
-    <!-- DASHBOARD SECTION (UNCHANGED) -->
+    <!-- DASHBOARD SECTION (UNCHANGED HTML) -->
     <div id="dashboardSection">
-        <!-- ... all your dashboard HTML ... -->
+        <div class="admin-header">
+            <div>
+                <h1 id="pageTitle">User Management</h1>
+                <small id="adminEmailDisplay" style="color: var(--text-muted);"></small>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Logout <i class="fas fa-sign-out-alt"></i></button>
+        </div>
+        <div class="page-container">
+            <div class="form-group">
+                <label for="user-search-input">Search User (Email, Name, or Phone)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="user-search-input" placeholder="e.g. user@example.com" />
+                    <button id="user-search-btn" class="action-btn">Search<span class="spinner"></span></button>
+                </div>
+            </div>
+            <div id="user-message-area" class="message"></div>
+            <hr id="user-form-divider" style="border-color: var(--border); margin: 25px 0; display:none;" />
+            <div id="user-edit-form-section" style="display:none;">
+                <h3 id="user-form-title" style="color: var(--accent);">Edit User</h3>
+                <div class="form-group">
+                    <label>User Record ID</label>
+                    <input type="text" id="user-doc-id" readonly style="background: #2a2a2a; color: #888; cursor: not-allowed;" />
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="user-edit-name" />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="user-edit-email" />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="user-edit-phone" />
+                </div>
+                <div class="form-group">
+                    <label>Account Activated</label>
+                    <select id="user-edit-activated">
+                        <option value="true">True (Active)</option>
+                        <option value="false">False (Inactive)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subscription Expiration</label>
+                    <input type="datetime-local" id="user-edit-expiresAt" />
+                    <div class="quick-add-grid">
+                        <button type="button" class="time-btn" onclick="addTime(1, 'd')">+ 1 Day</button>
+                        <button type="button" class="time-btn" onclick="addTime(3, 'd')">+ 3 Days</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'w')">+ 1 Week</button>
+                        <button type="button" class="time-btn" onclick="addTime(2, 'w')">+ 2 Weeks</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'm')">+ 1 Month</button>
+                        <button type="button" class="time-btn" onclick="addTime(3, 'm')">+ 3 Months</button>
+                        <button type="button" class="time-btn" onclick="addTime(6, 'm')">+ 6 Months</button>
+                        <button type="button" class="time-btn" onclick="addTime(1, 'y')">+ 1 Year</button>
+                        <button type="button" class="time-btn clear-date-btn" onclick="clearDate()">Clear Date (Remove Subscription)</button>
+                    </div>
+                </div>
+                <div id="user-status-info" style="display:none; margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 5px;"></div>
+                <div style="margin-top: 25px;">
+                    <button id="user-update-btn" class="action-btn" style="width: 100%;">Update User<span class="spinner"></span></button>
+                    <button id="user-create-btn" class="action-btn" style="width: 100%; display:none; background-color: var(--success);">Create New User<span class="spinner"></span></button>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <!-- === SCRIPT LIBRARIES (RESTORED FIREBASE AUTH) === -->
+    <!-- === SCRIPT LIBRARIES (ALL THREE ARE NOW INCLUDED) === -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-check-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.1/dist/pocketbase.umd.js"></script>
     
     <script>
         // --- HELPER FUNCTIONS (UNCHANGED) ---
-        function addTime(amount, unit) { /* ... */ }
-        function clearDate() { /* ... */ }
+        function addTime(amount, unit) {
+            const dateInput = document.getElementById('user-edit-expiresAt');
+            let baseDate = new Date();
+            if (dateInput.value) {
+                const currentInputDate = new Date(dateInput.value);
+                if (currentInputDate > new Date()) { baseDate = currentInputDate; }
+            }
+            if (unit === 'd') baseDate.setDate(baseDate.getDate() + amount);
+            else if (unit === 'w') baseDate.setDate(baseDate.getDate() + (amount * 7));
+            else if (unit === 'm') baseDate.setMonth(baseDate.getMonth() + amount);
+            else if (unit === 'y') baseDate.setFullYear(baseDate.getFullYear() + amount);
+            const offset = baseDate.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(baseDate.getTime() - offset).toISOString().slice(0, 16);
+            dateInput.value = localISOTime;
+        }
+        function clearDate() { document.getElementById('user-edit-expiresAt').value = ''; }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. FIREBASE CONFIG (FOR AUTH ONLY) ---
+            // --- 1. FIREBASE CONFIG (FOR AUTH & APP CHECK) ---
             const firebaseConfig = {
                 apiKey: "AIzaSyA_tMJGvqeS77OE6FnDFkLUmAZowzY2rVw",
                 authDomain: "streamzonemovies256.firebaseapp.com",
                 projectId: "streamzonemovies256",
-                // ... other keys
+                storageBucket: "streamzonemovies256.appspot.com",
+                messagingSenderId: "230912443746",
+                appId: "1:230912443746:web:b62ef244ef97c92f61983b",
+                measurementId: "G-V2NNGRKCGZ"
             };
 
-            // --- 2. INITIALIZE BOTH SERVICES ---
+            // --- 2. INITIALIZE ALL SERVICES ---
             const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
-            const auth = firebase.auth(app); // Firebase Auth for logging in/out
+            const auth = firebase.auth(app);
+            
+            // --- APP CHECK INITIALIZATION (RESTORED) ---
+            try {
+                const appCheck = firebase.appCheck(app);
+                appCheck.activate('6LfE6yYsAAAAAGaRjxCskaG2HiGs4wtj_MODir-h', true);
+                console.log("Firebase App Check activated.");
+            } catch(e) { 
+                console.warn("App Check could not be activated.", e);
+            }
             
             const POCKETBASE_URL = 'https://db.streamzonemovies.online';
-            const pb = new PocketBase(POCKETBASE_URL); // PocketBase for database actions
+            const pb = new PocketBase(POCKETBASE_URL);
 
             // --- 3. DOM ELEMENTS (UNCHANGED) ---
-            // ... all your getElementById calls ...
+            const loginSection = document.getElementById('loginSection');
+            const dashboardSection = document.getElementById('dashboardSection');
+            const adminEmailDisplay = document.getElementById('adminEmailDisplay');
+            const loginBtn = document.getElementById('login-btn');
+            const emailInput = document.getElementById('login-email');
+            const passInput = document.getElementById('login-password');
+            const loginError = document.getElementById('login-error');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userSearchInput = document.getElementById('user-search-input'); 
+            const userSearchBtn = document.getElementById('user-search-btn');
+            const userMessageArea = document.getElementById('user-message-area');
+            const userEditFormSection = document.getElementById('user-edit-form-section');
+            const userFormDivider = document.getElementById('user-form-divider');
+            const userDocIdInput = document.getElementById('user-doc-id');
+            const userEditNameInput = document.getElementById('user-edit-name');
+            const userEditEmailInput = document.getElementById('user-edit-email');
+            const userEditPhoneInput = document.getElementById('user-edit-phone');
+            const userEditActivatedSelect = document.getElementById('user-edit-activated');
+            const userEditExpiresAtInput = document.getElementById('user-edit-expiresAt');
+            const userUpdateBtn = document.getElementById('user-update-btn');
+            const userCreateBtn = document.getElementById('user-create-btn');
+            const userFormTitle = document.getElementById('user-form-title');
+            const userStatusInfo = document.getElementById('user-status-info');
 
             // --- 4. AUTH STATE LOGIC (HYBRID) ---
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
-                    // User is logged in with Firebase. Now, authenticate PocketBase.
-                    try {
-                        // Get the Firebase ID token
-                        const idToken = await user.getIdToken(true);
-                        
-                        // Authenticate PocketBase using the Firebase token
-                        // NOTE: This assumes your PocketBase is configured to use Firebase Auth.
-                        // The collection name must be 'user_profiles'
-                        await pb.collection('user_profiles').authWithOAuth2({
-                            provider: 'firebase',
-                            idToken: idToken,
-                        });
-                        
-                        console.log("PocketBase authenticated successfully.");
-                        loginSection.style.display = 'none';
-                        dashboardSection.style.display = 'block';
-                        adminEmailDisplay.textContent = user.email;
+                    // User is logged in with Firebase. Now, prepare PocketBase.
+                    // We will add the necessary tokens to every PocketBase request.
+                    pb.authStore.clear(); // Clear any previous PocketBase session
 
-                    } catch (err) {
-                        console.error("PocketBase auth failed:", err);
-                        displayMessage("Failed to connect to the database. " + (err.data?.message || err.message), 'error');
-                        // Log out from Firebase if DB connection fails
-                        auth.signOut();
-                    }
+                    // This is the key part: we add a "hook" to PocketBase's fetch function.
+                    // Before any request is sent by the PocketBase SDK, this code will run.
+                    pb.beforeSend = async function (url, options) {
+                        try {
+                            // Get the latest Firebase Auth token
+                            const idToken = await user.getIdToken(true);
+                            options.headers['Authorization'] = `Bearer ${idToken}`;
+
+                            // Get the latest Firebase App Check token
+                            const appCheck = firebase.appCheck(app);
+                            const appCheckToken = await appCheck.getToken(false);
+                            options.headers['X-Firebase-AppCheck'] = appCheckToken.token;
+                        } catch (e) {
+                            console.error("Error getting tokens for PocketBase request", e);
+                            // Optionally cancel the request if tokens can't be fetched
+                            // throw new Error("Could not attach auth tokens.");
+                        }
+                        return { url, options };
+                    };
+                    
+                    console.log("PocketBase is now configured to send Firebase tokens.");
+                    loginSection.style.display = 'none';
+                    dashboardSection.style.display = 'block';
+                    adminEmailDisplay.textContent = user.email;
+
                 } else {
                     // User is logged out from Firebase
-                    pb.authStore.clear(); // Clear PocketBase session as well
+                    pb.authStore.clear();
+                    pb.beforeSend = null; // Remove the hook
                     loginSection.style.display = 'flex';
                     dashboardSection.style.display = 'none';
                 }
@@ -205,10 +323,115 @@
                 auth.signOut();
             });
 
-            // --- 7. DASHBOARD FUNCTIONS (USING POCKETBASE) ---
-            // ... all your dashboard functions (setLoading, displayMessage, etc.) ...
-            // ... The search, update, and create logic remains the same as the PocketBase version I sent before.
-            // They will work correctly now because 'pb' is authenticated.
+            // --- 7. DASHBOARD FUNCTIONS (USING POCKETBASE - UNCHANGED) ---
+            function setLoading(btn, isLoading) {
+                btn.classList.toggle('loading', isLoading);
+                btn.disabled = isLoading;
+            }
+            function displayMessage(msg, type) {
+                userMessageArea.textContent = msg;
+                userMessageArea.className = `message ${type}`;
+                userMessageArea.style.display = 'block';
+                setTimeout(() => { userMessageArea.style.display = 'none'; }, 5000);
+            }
+            function formatPocketBaseDateForInput(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const offset = date.getTimezoneOffset() * 60000;
+                return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+            }
+            function clearUserForm() {
+                userDocIdInput.value = ''; userEditNameInput.value = ''; userEditEmailInput.value = '';
+                userEditPhoneInput.value = ''; userEditActivatedSelect.value = 'true'; userEditExpiresAtInput.value = '';
+                userEditFormSection.style.display = 'none'; userFormDivider.style.display = 'none';
+                userStatusInfo.style.display = 'none';
+            }
+            function displayUserStatus(userData) {
+                let html = '<h4 style="margin:0 0 10px 0; color:white;">Subscription Status</h4>';
+                if (userData.expiresAt) {
+                    const expiry = new Date(userData.expiresAt);
+                    const now = new Date();
+                    const dateStr = expiry.toLocaleString();
+                    if (expiry < now) html += `<div style="color:#ff6b6b">Expired on: ${dateStr}</div>`;
+                    else html += `<div style="color:#46d369">Active until: ${dateStr}</div>`;
+                } else html += `<div style="color:#aaa">No Expiration Date Set</div>`;
+                userStatusInfo.innerHTML = html;
+                userStatusInfo.style.display = 'block';
+            }
+
+            // SEARCH LOGIC
+            userSearchBtn.addEventListener('click', async () => {
+                const term = userSearchInput.value.trim();
+                if (!term) return displayMessage('Enter search term', 'error');
+                clearUserForm();
+                setLoading(userSearchBtn, true);
+                try {
+                    const filter = `(email = "${term}" || name ~ "${term}" || phone ~ "${term}")`;
+                    const result = await pb.collection('user_profiles').getFirstListItem(filter);
+                    
+                    displayMessage('User found.', 'success');
+                    userFormTitle.textContent = "Edit User";
+                    userDocIdInput.value = result.id;
+                    userEditNameInput.value = result.name || '';
+                    userEditEmailInput.value = result.email || '';
+                    userEditPhoneInput.value = result.phone || '';
+                    userEditActivatedSelect.value = result.activated ? 'true' : 'false';
+                    userEditExpiresAtInput.value = formatPocketBaseDateForInput(result.expiresAt);
+                    displayUserStatus(result);
+                    userUpdateBtn.style.display = 'block';
+                    userCreateBtn.style.display = 'none';
+                    userEditFormSection.style.display = 'block';
+                    userFormDivider.style.display = 'block';
+
+                } catch (e) {
+                    if (e.status === 404) {
+                        displayMessage('No user found. You can create a new one.', 'info');
+                        userFormTitle.textContent = "Create New User";
+                        userDocIdInput.value = "Auto-Generated on Save";
+                        if(term.includes('@')) userEditEmailInput.value = term;
+                        else userEditNameInput.value = term;
+                        userUpdateBtn.style.display = 'none';
+                        userCreateBtn.style.display = 'block';
+                        userEditFormSection.style.display = 'block';
+                        userFormDivider.style.display = 'block';
+                    } else {
+                        displayMessage(e.data?.message || e.message, 'error');
+                    }
+                } finally {
+                    setLoading(userSearchBtn, false);
+                }
+            });
+
+            // UPDATE LOGIC
+            userUpdateBtn.addEventListener('click', async () => {
+                const uid = userDocIdInput.value;
+                if (!uid) return;
+                setLoading(userUpdateBtn, true);
+                try {
+                    const dateVal = userEditExpiresAtInput.value ? new Date(userEditExpiresAtInput.value).toISOString() : null;
+                    const payload = {
+                        name: userEditNameInput.value,
+                        email: userEditEmailInput.value,
+                        phone: userEditPhoneInput.value,
+                        activated: userEditActivatedSelect.value === 'true',
+                        expiresAt: dateVal,
+                    };
+                    const updatedRecord = await pb.collection('user_profiles').update(uid, payload);
+                    displayMessage('User updated successfully', 'success');
+                    displayUserStatus(updatedRecord);
+                } catch (e) {
+                    displayMessage(e.data?.message || e.message, 'error');
+                } finally {
+                    setLoading(userUpdateBtn, false);
+                }
+            });
+            
+            // CREATE LOGIC
+            userCreateBtn.addEventListener('click', async () => {
+                // This logic would need to create a Firebase Auth user first, which is complex from a client-side admin panel.
+                // For now, this is disabled. You should create users through your app or Firebase console.
+                displayMessage('User creation from this panel is not supported. Please use your app to register new users.', 'error');
+            });
         });
     </script>
 </body>
